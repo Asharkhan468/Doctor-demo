@@ -55,6 +55,7 @@ export interface Consultation {
   plan: string;
   followUpInstructions?: string;
   additionalNotes?: string;
+  transcript?: string;
   status: ConsultationStatus;
   clinicalNoteId?: string;
   createdAt: string;

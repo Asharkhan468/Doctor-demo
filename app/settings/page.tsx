@@ -107,7 +107,7 @@ export default function SettingsPage() {
             <div>
               <h3 className="text-sm font-bold text-slate-900">Physician Profile & Credentials</h3>
               <p className="text-xs text-slate-500">
-                These credentials appear on clinical notes and electronic signature audit stamps.
+                These credentials appear on consultation notes and demo review history.
               </p>
             </div>
           </div>

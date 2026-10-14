@@ -11,18 +11,12 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   FileText,
   Search,
-  Filter,
   Copy,
   Edit3,
   CheckCircle2,
-  Calendar,
   Sparkles,
-  Printer,
   Download,
-  AlertCircle,
-  ExternalLink,
   Save,
-  Check,
 } from 'lucide-react';
 
 function ClinicalNotesContent() {
@@ -92,14 +86,24 @@ function ClinicalNotesContent() {
 
   const handleSaveEdits = () => {
     if (!selectedNote) return;
+    const hasChanged = editedContent !== selectedNote.fullFormattedNote;
     const updated: ClinicalNote = {
       ...selectedNote,
       fullFormattedNote: editedContent,
+      status: hasChanged ? 'Draft' : selectedNote.status,
+      reviewedAt: hasChanged ? undefined : selectedNote.reviewedAt,
+      finalizedAt: hasChanged ? undefined : selectedNote.finalizedAt,
       updatedAt: new Date().toISOString(),
     };
     editNote(updated);
     setIsEditing(false);
-    showToast('Changes saved to clinical note document.', 'info', 'Saved');
+    showToast(
+      hasChanged
+        ? 'Changes saved. The note is now a draft and must be reviewed again.'
+        : 'Clinical note saved.',
+      'info',
+      'Saved'
+    );
   };
 
   const handleCopy = () => {
@@ -120,10 +124,6 @@ function ClinicalNotesContent() {
     element.click();
     document.body.removeChild(element);
     showToast('Clinical note downloaded as text file.', 'success', 'Downloaded');
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const handleConfirmFinalize = () => {
@@ -266,11 +266,18 @@ function ClinicalNotesContent() {
                     size="sm"
                     className="h-8 text-xs px-2.5"
                     onClick={() => {
-                      if (isEditing) handleSaveEdits();
+                      if (selectedConsultation) {
+                        router.push(`/consultations/new?consultationId=${selectedConsultation.id}`);
+                      } else if (isEditing) handleSaveEdits();
                       else setIsEditing(true);
                     }}
                   >
-                    {isEditing ? (
+                    {selectedConsultation ? (
+                      <>
+                        <Edit3 className="h-3.5 w-3.5 mr-1" />
+                        Edit SOAP
+                      </>
+                    ) : isEditing ? (
                       <>
                         <Save className="h-3.5 w-3.5 mr-1" />
                         Save Edits
@@ -351,9 +358,9 @@ function ClinicalNotesContent() {
                   <>
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                     <span>
-                      <strong>Legally Signed & Finalized:</strong> Electronically signed by{' '}
-                      {selectedNote.doctorName}. Locked into record on{' '}
-                      {selectedNote.finalizedAt ? formatDate(selectedNote.finalizedAt) : 'audit date'}.
+                      <strong>Approved in this demo:</strong> Marked finalized by{' '}
+                      {selectedNote.doctorName} on{' '}
+                      {selectedNote.finalizedAt ? formatDate(selectedNote.finalizedAt) : 'the recorded date'}.
                     </span>
                   </>
                 ) : (
@@ -424,7 +431,7 @@ function ClinicalNotesContent() {
         onClose={() => setIsFinalizeModalOpen(false)}
         onConfirm={handleConfirmFinalize}
         title="Sign & Finalize Clinical Note"
-        description="By finalizing this clinical note, you verify that you have reviewed the Subjective, Objective, Assessment, and Plan documentation. It will be stamped with your electronic signature and locked into the patient record."
+        description="Confirm that you reviewed the Subjective, Objective, Assessment, and Plan sections and want to mark this note approved in the demo."
         confirmText="Confirm & Sign Note"
         cancelText="Keep as Draft"
         variant="primary"

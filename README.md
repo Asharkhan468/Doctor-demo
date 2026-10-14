@@ -4,7 +4,7 @@
 
 Clinote AI is a commercial healthcare SaaS prototype designed for physicians to manage patient encounters, structure daily consultation schedules, generate AI-assisted clinical notes (SOAP format), and review patient records from an intuitive, single dashboard.
 
-Built as an enterprise-grade concept demonstration for prospective clients (Fiverr presentation ready), this prototype runs entirely locally in the browser with deterministic AI simulation, client-side persistence, and zero paid API dependencies.
+Clinote AI is a functional workflow demonstration: it records or accepts consultation audio, sends it to a server-side speech-to-text provider, and generates editable SOAP drafts from the clinician-reviewed transcript. Consultation records in this prototype are stored in the current browser only; this is not a secure or multi-user medical records system.
 
 ---
 
@@ -31,25 +31,10 @@ Built as an enterprise-grade concept demonstration for prospective clients (Five
   - *Acute Bronchitis & Cough (Urgent Care)*
   - *Type 2 Diabetes Routine Optimization*
   - *Migraine with Visual Aura Review*
-- **Step 2: Structured Clinical Documentation:**
-  - Chief Complaint
-  - History of Present Illness (HPI)
-  - Review of Systems (ROS)
-  - Physical Examination Findings & Vitals
-  - Clinical Assessment & Diagnostic Impression
-  - Plan, Medications & Patient Instructions
-  - Follow-up Guidance
-- **Step 3: AI-Assisted Clinical Note Generator:**
-  - Realistic multi-stage transformer simulation with visual progress indicator.
-  - Generates standardized **SOAP (Subjective, Objective, Assessment, Plan)** notes.
-  - Strict compliance: uses only entered data, marks absent fields as `(Not provided)`, avoiding hallucinations.
-  - Labeled with: `AI-Assisted Draft • Clinical Review Required`.
-- **Step 4: Review, Edit & Finalize:**
-  - In-place document editing toggle.
-  - Copy note to clipboard with toast notification.
-  - Save draft and resume anytime.
-  - Physician review verification.
-  - Formal finalization with confirmation modal, locking the note with electronic signature and audit timestamp.
+- **Step 2: Actual Audio Capture:** Record from the browser microphone, pause/resume, stop and play the recording, or upload an audio file (4 MB maximum to fit Vercel's function request limit).
+- **Step 3: Real Speech-to-Text:** Audio is sent to the server-side OpenAI transcription endpoint. The returned transcript can be corrected before note generation; missing API credentials or provider failures are shown as errors, never simulated as success.
+- **Step 4: AI-Assisted SOAP Draft:** OpenAI generates four separate editable sections from the reviewed transcript. The prompt requires preservation of details and negations and marks absent information `Not documented`; output still requires clinician verification.
+- **Step 5: Review, Save & Approve:** Save a draft, reopen it from consultation history, edit individual SOAP sections, mark reviewed, or explicitly approve after confirmation. Saving edits to an approved note returns it to draft status and requires reapproval.
 
 ### 4. Clinical Notes Library
 - Searchable repository filtered by `All`, `Draft`, `Reviewed`, and `Finalized`.
@@ -70,15 +55,16 @@ Built as an enterprise-grade concept demonstration for prospective clients (Five
 - **Language:** TypeScript (Strict typing across data models and services)
 - **Styling:** Tailwind CSS (Deep navy `#0f172a`, soft slate `#f8fafc`, restrained teal `#0d9488` accents)
 - **Icons:** Lucide React
-- **Persistence:** Browser `localStorage` with custom multi-tab event synchronization
-- **Architecture:** Isolated service layer for AI note generation and storage persistence
+- **Persistence:** Existing browser `localStorage` store with cross-tab updates (demonstration only; not secure shared storage)
+- **AI endpoints:** Next.js Route Handlers keep the OpenAI API key server-side and validate audio size/type and SOAP response structure
+- **Authentication/database:** Not implemented; there is no doctor account, server-side ownership enforcement, or production database
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18+ or v20+)
+- Node.js 20.9+
 - npm or pnpm
 
 ### Installation
@@ -99,6 +85,15 @@ Built as an enterprise-grade concept demonstration for prospective clients (Five
    ```
 
 4. Open your browser at [http://localhost:3000](http://localhost:3000).
+
+### Configure the AI providers
+
+1. Copy `.env.example` to `.env.local`.
+2. Set `OPENAI_API_KEY` to an OpenAI API key with access to audio transcription and Responses API models. Keep this key server-side; do not prefix it with `NEXT_PUBLIC_`.
+3. The defaults are `gpt-transcribe` for speech transcription and `gpt-4o-mini` for structured SOAP generation. Override them with `OPENAI_TRANSCRIPTION_MODEL` or `OPENAI_NOTES_MODEL` only if your account supports a different model.
+4. Restart the development server and visit `/consultations/new`. Record or upload fictional consultation audio, transcribe it, review/correct the returned text, generate and edit each SOAP section, then save and approve the note.
+
+Without `OPENAI_API_KEY`, the consultation workflow remains accessible, but transcription and SOAP endpoints return an explicit configuration error. No successful AI output is simulated. OpenAI processes the audio/transcript under the account's API terms; use synthetic data for this demo.
 
 ### Production Build
 To test the production build:
@@ -129,18 +124,17 @@ npm run start
 4. **1-Click Scenario Demo:**
    - In the consultation desk (`/consultations/new`), click the **"⚡ Load Preset Clinical Case..."** dropdown.
    - Select **"Acute Bronchitis & Cough (Urgent Care)"**.
-   - Notice all clinical fields (Chief Complaint, HPI, Physical Exam, Assessment, Plan) instantly populate with realistic medical phrasing.
+   - Notice the optional clinical intake fields populate with fictional example data. They do not fabricate a transcript or AI result.
 
-5. **Generate AI Draft Note:**
-   - Click the teal **"Generate Draft Note"** button.
-   - Observe the animated progress bar as it structures the inputs into SOAP format.
-   - Review the document preview with the `AI-Assisted Draft • Clinical Review Required` banner.
+5. **Record and transcribe audio:**
+   - Use **Start Recording** and allow microphone access, then pause/resume and stop; alternatively upload a supported audio file.
+   - Play the captured audio, choose **Transcribe Audio**, then correct the actual returned transcript.
+   - Click **Generate Draft Note** to send that reviewed transcript to the SOAP endpoint.
 
-6. **Edit, Copy, and Finalize:**
-   - Click **"Edit Note"** to make live adjustments in the document textarea.
-   - Click **"Copy"** or **"Save Draft"**.
-   - Click **"Finalize Note"**; review the confirmation modal ("Confirm Clinical Finalization"), and confirm.
-   - The note is now stamped as `Finalized` and signed by Dr. Sarah Morgan.
+6. **Review and approve:**
+   - Edit each of the four SOAP sections and click **Save Draft**.
+   - Mark the note reviewed or click **Finalize Note**, inspect the confirmation, and explicitly approve.
+   - Reopen the consultation from **Consultations**. Later edits to an approved note reset it to draft.
 
 7. **Persistence Verification:**
    - Refresh the browser (`F5`).
@@ -153,6 +147,8 @@ npm run start
 
 ---
 
-## 🔒 Demo Safety & Privacy Notice
+## Deployment, security, and limitations
 
-Clinote AI is a commercial concept prototype created for software demonstration. It does not use or store real protected health information (PHI) and does not replace professional clinical judgment. It does not connect to external third-party AI APIs during this demonstration, ensuring total zero-cost portability and privacy.
+Deploy using the existing Next.js/Vercel project configuration; no custom `vercel.json` or database migration is present. Add `OPENAI_API_KEY` (and optional model overrides) under the Vercel project's server-side Environment Variables for each deployment environment, then redeploy. Never expose the key to the browser. Audio uploads are capped at 4 MB because Vercel Functions currently limit request and response payloads to 4.5 MB; keep this demo on a protected deployment because it has no account authentication or per-doctor usage controls.
+
+This demo has **no registration/login, server-side consultation persistence, doctor ownership checks, or secure multi-doctor data isolation**. Notes and transcripts are stored in browser `localStorage`, which is neither encrypted medical storage nor shared across doctors/devices. Audio is held in browser memory and sent to OpenAI only when transcription is requested. Use fictional patients and synthetic audio only. This application has not undergone a HIPAA assessment and is not represented as HIPAA-compliant or production-ready. A commercial deployment requires a vetted identity system, database and access-control design, audit/security review, retention controls, and applicable contractual/compliance work.

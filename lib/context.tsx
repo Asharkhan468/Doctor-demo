@@ -185,7 +185,7 @@ export function ClinoteProvider({ children }: { children: React.ReactNode }) {
         }
 
         showToast(
-          `Note ${note.id} has been signed and locked into patient records.`,
+          `Note ${note.id} was marked approved in this browser demo.`,
           'success',
           'Clinical Note Finalized'
         );
